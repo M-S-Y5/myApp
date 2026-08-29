@@ -25,13 +25,15 @@ jobs:
       - name: Build iOS App (Bypass Certificates)
         run: |
           cd ios
-          xcodebuild -workspace myapp.xcworkspace -scheme myapp -configuration Release -sdk iphoneos CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO CONFIGURATION_BUILD_DIR=$PWD/build build
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json | jq -r '.workspace.schemes[0]')
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO CONFIGURATION_BUILD_DIR=$PWD/build build
 
       - name: Convert to IPA
         run: |
           cd ios
-          mkdir Payload
-          mv build/myapp.app Payload/
+          mkdir -p Payload
+          mv build/*.app Payload/
           zip -r ../myApp.ipa Payload
 
       - name: Upload IPA File
