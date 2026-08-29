@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة وبوابة الأسرة الرقمية المتكاملة</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js للرسوم البيانية -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { cairo: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        primary: '#183c2e',
+                        primaryLight: '#235944',
+                        secondary: '#2d6a4f',
+                        accent: '#c99a65',
+                        accentHover: '#b58552',
+                        sandBg: '#fbf9f5',
+                        darkGreen: '#0b2017',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .tree-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tree-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08); }
+        /* أنماط مساحة العمل التفاعلية (Canvas) */
+        .tree-canvas { cursor: grab; }
+        .tree-canvas:active { cursor: grabbing; }
+        .qr-gradient { background: linear-gradient(135deg, #183c2e 0%, #235944 100%); }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-accent selection:text-white">
+
+    <!-- شريط الرأس والتحكم العلوي -->
+    <header class="bg-primary text-white shadow-md sticky top-0 z-50 border-b border-accent/20">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
+            <!-- الشعار والهوية -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-accent text-darkGreen flex items-center justify-center font-bold text-xl shadow-inner">
+                    <i class="fa-solid fa-tree"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold leading-tight flex items-center gap-2">
+                        بوابة الأسرة الرقمية الشاملة
+                        <span class="text-[10px] bg-emerald-700/80 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-500/30">إصدار 2026</span>
+                    </h1>
+                    <p class="text-[11px] text-emerald-200/90">النسب • التكافل والوقف • الذاكرة والتراث • الكفاءات والأعمال</p>
+                </div>
+            </div>
+
+            <!-- الأدوات السريعة والحساب -->
+            <div class="flex items-center gap-2">
+                <!-- زر بنك الدم (نبض) -->
+                <button onclick="switchTab('bloodBank')" class="relative p-2 text-red-400 hover:text-red-300 transition animate-pulse" title="حالات طوارئ طبية">
+                    <i class="fa-solid fa-droplet text-lg"></i>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary"></span>
+                </button>
+                <!-- البطاقة الرقمية الذكية -->
+                <button onclick="openModal('digitalIdModal')" class="bg-accent hover:bg-accentHover text-darkGreen font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span class="hidden sm:inline">البطاقة العائلية</span>
+                </button>
+                <button onclick="openModal('addVitalModal')" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span class="hidden sm:inline">تسجيل واقعة</span>
+                </button>
+                <div class="flex items-center gap-2 bg-black/20 px-2.5 py-1 rounded-full border border-emerald-700/40 cursor-pointer" onclick="openModal('privacyModal')">
+                    <span class="w-7 h-7 rounded-full bg-accent text-darkGreen font-black flex items-center justify-center text-xs">ص</span>
+                    <div class="text-right hidden md:block">
+                        <div class="text-xs font-bold leading-tight">صالح بن عبدالله</div>
+                        <div class="text-[10px] text-emerald-300">عضو معتمد <i class="fa-solid fa-gear ml-1"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط التنقل الشامل (تمت إضافة قسم بنك الدم) -->
+        <nav class="bg-darkGreen/50 border-t border-emerald-800/60">
+            <div class="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto custom-scroll py-1.5">
+                <button onclick="switchTab('tree')" id="tab-tree" class="nav-btn py-2 px-3 text-xs font-bold text-accent border-b-2 border-accent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-sitemap"></i> شجرة النسب والبحث
+                </button>
+                <button onclick="switchTab('vital')" id="tab-vital" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-bullhorn"></i> السجل والأحداث المدنية
+                </button>
+                <button onclick="switchTab('fund')" id="tab-fund" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-vault"></i> الصندوق والأوقاف والتكافل
+                </button>
+                <button onclick="switchTab('bloodBank')" id="tab-bloodBank" class="nav-btn py-2 px-3 text-xs font-bold text-red-300 hover:text-red-100 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-truck-medical"></i> بنك الدم والطوارئ
+                </button>
+                <button onclick="switchTab('awards')" id="tab-awards" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-graduation-cap"></i> جائزة التفوق العلمي
+                </button>
+                <button onclick="switchTab('archive')" id="tab-archive" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> الأرشيف والذكاء الاصطناعي
+                </button>
+                <button onclick="switchTab('oralHistory')" id="tab-oralHistory" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-microphone-lines"></i> الرواية الشفهية والقصائد
+                </button>
+                <button onclick="switchTab('majlis')" id="tab-majlis" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-mug-hot"></i> دليل المجالس والدواوين
+                </button>
+                <button onclick="switchTab('perks')" id="tab-perks" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-tags"></i> تجارة وعروض الأسرة
+                </button>
+                <button onclick="switchTab('directory')" id="tab-directory" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-briefcase"></i> دليل الكفاءات والتوظيف
+                </button>
+                <button onclick="switchTab('governance')" id="tab-governance" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-users-gear"></i> اللجان والشورى والتصويت
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-gamepad"></i> تحدي ومسابقات التاريخ
+                </button>
+                <button onclick="switchTab('events')" id="tab-events" class="nav-btn py-2 px-3 text-xs font-bold text-slate-300 hover:text-white border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap transition">
+                    <i class="fa-solid fa-calendar-check"></i> اللقاءات والمناسبات
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- مساحة المحتوى الرئيسية -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+        <!-- 1. شجرة النسب والبحث المتقدم (مع تحسين الـ Canvas) -->
+        <section id="section-tree" class="tab-content block space-y-5">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 pb-4 border-b">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-network-wired text-primary"></i> الشجرة والنسب التفاعلي
+                        </h2>
+                        <p class="text-xs text-slate-500">تصفح شجرة النسب الممتدة عبر الأجيال، مع إمكانية البحث والفلترة حسب الفروع</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative">
+                            <input type="text" id="treeSearchInput" onkeyup="searchTree()" placeholder="ابحث بالاسم الكامل أو اللقب..." class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 pr-8 focus:ring-2 focus:ring-primary focus:outline-none w-56">
+                            <i class="fa-solid fa-magnifying-glass absolute right-2.5 top-2.5 text-slate-400 text-xs"></i>
+                        </div>
+                        <button onclick="alert('جاري توليد شجرة حائطية مفرغة فائقة الدقة (Vector PDF) بدقة 300DPI جاهزة للطباعة بمقاس 2×3 متر.');" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-300 flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-file-pdf text-red-600 text-sm"></i> تصدير مخطط حائطي
+                        </button>
+                    </div>
+                </div>
+
+                <!-- مساحة العمل التفاعلية (Canvas للتحريك والتكبير) -->
+                <div class="tree-canvas bg-sandBg border border-slate-200 rounded-xl overflow-hidden relative h-[500px]" id="treePanContainer">
+                    
+                    <!-- أزرار التكبير والتصغير -->
+                    <div class="absolute top-4 right-4 z-10 flex flex-col gap-2">
+                        <button onclick="zoomTree(1.1)" class="w-8 h-8 bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 font-bold hover:bg-slate-50">+</button>
+                        <button onclick="zoomTree(0.9)" class="w-8 h-8 bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 font-bold hover:bg-slate-50">-</button>
+                    </div>
+
+                    <div id="treeNodes" class="w-full h-full flex flex-col items-center pt-8 pb-10 px-10" style="transform: scale(1); transform-origin: top center; transition: transform 0.2s;">
+                        
+                        <!-- الجيل 0: الجد الجامع -->
+                        <div class="tree-card bg-primary text-white p-4 rounded-2xl shadow-md border-2 border-accent text-center cursor-pointer min-w-[240px]" onclick="showPersonModal('صالح بن إبراهيم بن يحيى', 'الجد الجامع للأسرة (مواليد 1318هـ)', 'الرياض / بريدة', 'إمام مسجد، كاتب وصايا، ومعلم قرآن كريم ساهم في بناء أول مدرسة أهلية بالمنطقة.', 'مكتمل التوثيق بالسجلات التاريخية', '1318هـ - 1395هـ')">
+                            <span class="text-[10px] bg-accent text-darkGreen px-2.5 py-0.5 rounded-full font-bold">الجد الجامع للأسرة</span>
+                            <h3 class="font-bold text-base mt-1.5">صالح بن إبراهيم بن يحيى</h3>
+                            <p class="text-[11px] text-emerald-200 mt-0.5 font-mono">1318هـ - 1395هـ</p>
+                            <div class="text-[10px] text-slate-300 mt-1 flex justify-center gap-3">
+                                <span><i class="fa-solid fa-user-group text-accent"></i> 4 أبناء</span>
+                                <span><i class="fa-solid fa-users text-accent"></i> 68 حفيداً</span>
+                            </div>
+                        </div>
+
+                        <!-- خط الربط -->
+                        <div class="w-0.5 h-6 bg-slate-400 my-1"></div>
+
+                        <!-- الجيل 1: الأبناء (فروع العائلة) -->
+                        <div class="w-full max-w-4xl flex justify-between pt-3 border-t-2 border-slate-400 relative">
+                            
+                            <!-- فرع 1: محمد -->
+                            <div class="flex flex-col items-center relative flex-1 px-2">
+                                <div class="absolute -top-3 w-0.5 h-3 bg-slate-400"></div>
+                                <div class="tree-card bg-white p-3.5 rounded-xl border border-slate-300 shadow-xs text-center cursor-pointer w-full" onclick="showPersonModal('محمد بن صالح بن إبراهيم', 'مؤسس فرع الرياض', 'الرياض (حي المربع سابقاً)', 'رجل أعمال ساهم في تأسيس أول صندوق تكافلي ومجلس أسري عام 1405هـ.', 'موثق', '1345هـ - 1424هـ')">
+                                    <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">فرع الرياض</span>
+                                    <h4 class="font-bold text-sm text-slate-900 mt-1">محمد بن صالح</h4>
+                                    <p class="text-[10px] text-slate-500">1345هـ - 1424هـ</p>
+                                    <div class="mt-2 text-[10px] text-emerald-700 bg-emerald-50 py-1 rounded">24 حفيداً مسجلاً</div>
+                                </div>
+                                <div class="w-0.5 h-4 bg-slate-300 my-1"></div>
+                                <!-- الجيل 2: الأحفاد -->
+                                <div class="space-y-2 w-full">
+                                    <div class="tree-card bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-right cursor-pointer" onclick="showPersonModal('عبدالله بن محمد بن صالح', 'فرع الرياض', 'الرياض', 'مهندس استشاري ومسؤول منصة الأنساب والتوثيق الحالية.', 'عضو نشط', 'مواليد 1388هـ')">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-xs text-slate-800">م. عبدالله بن محمد</span>
+                                            <span class="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-bold">مهندس</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">أبناء: صالح، محمد، نورة</p>
+                                    </div>
+                                    <div class="tree-card bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-right cursor-pointer" onclick="showPersonModal('سعد بن محمد بن صالح', 'فرع الرياض', 'الرياض', 'مستشار مالي ومصرفي، يشرف على استثمارات الوقف العائلي.', 'عضو نشط', 'مواليد 1392هـ')">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-xs text-slate-800">أ. سعد بن محمد</span>
+                                            <span class="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">مالية</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">أبناء: فيصل، سارة، ريم</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- فرع 2: عبدالرحمن -->
+                            <div class="flex flex-col items-center relative flex-1 px-2">
+                                <div class="absolute -top-3 w-0.5 h-3 bg-slate-400"></div>
+                                <div class="tree-card bg-white p-3.5 rounded-xl border border-slate-300 shadow-xs text-center cursor-pointer w-full" onclick="showPersonModal('د. عبدالرحمن بن صالح', 'مؤسس فرع القصيم', 'بريدة', 'قاضٍ سابق وأستاذ في الشريعة، رئيس مجلس الأمناء والأعيان الحالي.', 'موثق', 'مواليد 1350هـ')">
+                                    <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">فرع القصيم</span>
+                                    <h4 class="font-bold text-sm text-slate-900 mt-1">د. عبدالرحمن بن صالح</h4>
+                                    <p class="text-[10px] text-slate-500">رئيس مجلس الأمناء</p>
+                                    <div class="mt-2 text-[10px] text-amber-700 bg-amber-50 py-1 rounded">28 حفيداً مسجلاً</div>
+                                </div>
+                                <div class="w-0.5 h-4 bg-slate-300 my-1"></div>
+                                <!-- الجيل 2: الأحفاد -->
+                                <div class="space-y-2 w-full">
+                                    <div class="tree-card bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-right cursor-pointer" onclick="showPersonModal('د. إبراهيم بن عبدالرحمن', 'فرع القصيم', 'بريدة', 'استشاري أول طب باطني بمستشفى الملك فهد التخصصي.', 'عضو نشط', 'مواليد 1385هـ')">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-xs text-slate-800">د. إبراهيم بن عبدالرحمن</span>
+                                            <span class="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.2 rounded font-bold">طبيب</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">أبناء: عبدالرحمن، سليمان</p>
+                                    </div>
+                                    <div class="tree-card bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-right cursor-pointer" onclick="showPersonModal('خالد بن عبدالرحمن', 'فرع القصيم', 'عنيزة', 'مدير تعليم متقاعد وكاتب ومؤرخ لتراث المنطقة.', 'عضو نشط', 'مواليد 1389هـ')">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-xs text-slate-800">أ. خالد بن عبدالرحمن</span>
+                                            <span class="text-[9px] bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded font-bold">تعليم</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">أبناء: طارق، منيرة</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- فرع 3: سليمان -->
+                            <div class="flex flex-col items-center relative flex-1 px-2">
+                                <div class="absolute -top-3 w-0.5 h-3 bg-slate-400"></div>
+                                <div class="tree-card bg-white p-3.5 rounded-xl border border-slate-300 shadow-xs text-center cursor-pointer w-full" onclick="showPersonModal('سليمان بن صالح', 'مؤسس فرع الشرقية', 'الدمام / الخبر', 'رائد أعمال في مجال النقل البحري والخدمات اللوجستية.', 'موثق', '1355هـ - 1438هـ')">
+                                    <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">المنطقة الشرقية</span>
+                                    <h4 class="font-bold text-sm text-slate-900 mt-1">سليمان بن صالح</h4>
+                                    <p class="text-[10px] text-slate-500">1355هـ - 1438هـ</p>
+                                    <div class="mt-2 text-[10px] text-blue-700 bg-blue-50 py-1 rounded">16 حفيداً مسجلاً</div>
+                                </div>
+                                <div class="w-0.5 h-4 bg-slate-300 my-1"></div>
+                                <!-- الجيل 2: الأحفاد -->
+                                <div class="space-y-2 w-full">
+                                    <div class="tree-card bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-right cursor-pointer" onclick="showPersonModal('فيصل بن سليمان بن صالح', 'فرع الشرقية', 'الخبر', 'مؤسس شركة حلول ذكاء اصطناعي وأمن سيبراني.', 'عضو نشط', 'مواليد 1395هـ')">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-xs text-slate-800">أ. فيصل بن سليمان</span>
+                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">تقنية</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">أبناء: بدر، الجوهرة</p>
+                                    </div>
+                                    <div class="tree-card bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-right cursor-pointer" onclick="showPersonModal('م. عبدالعزيز بن سليمان', 'فرع الشرقية', 'الجبيل الصناعية', 'كبير مهندسي صيانة بشركة سابك.', 'عضو نشط', 'مواليد 1398هـ')">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-xs text-slate-800">م. عبدالعزيز بن سليمان</span>
+                                            <span class="text-[9px] bg-slate-200 text-slate-800 px-1.5 py-0.2 rounded font-bold">هندسة</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">أبناء: سعود، لمى</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. السجل والأحداث المدنية (مواليد، وفيات، ترقيات، أرقام) -->
+        <section id="section-vital" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- شريط الأخبار والإعلانات الرسمية -->
+                <div class="lg:col-span-2 space-y-4">
+                    
+                    <!-- بطاقة مولود تفاعلية -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-200 bg-gradient-to-r from-white to-emerald-50/30">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start gap-3.5">
+                                <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+                                    <i class="fa-solid fa-baby"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">بشارة مولود جديد 👶</span>
+                                        <span class="text-[10px] text-slate-400">اليوم 09:15 ص</span>
+                                    </div>
+                                    <h3 class="font-bold text-sm text-slate-900 mt-1">رزق ابن العم/ عبدالله بن محمد بن صالح بمولود أسماه "صالح"</h3>
+                                    <p class="text-xs text-slate-600 mt-1">جعله الله قرة عين لوالديه ومن حفظة كتابه الكريم، وبارك فيه وفي والديه.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                            <span class="text-slate-500" id="babyCongratsText"><i class="fa-solid fa-heart text-red-500"></i> 48 من أفراد الأسرة قدموا التهنئة</span>
+                            <button onclick="congratulateBaby()" id="btnBabyCongrat" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-xl font-bold shadow-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-hands-clapping"></i> تقديم تهنئة مباركة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة إنجاز وترقية -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-md">إنجاز وتهنئة مهنية 🎓</span>
+                                    <span class="text-[10px] text-slate-400">أمس 04:30 م</span>
+                                </div>
+                                <h3 class="font-bold text-sm text-slate-900 mt-1">ترقية الأستاذ فيصل بن سليمان إلى شريك تنفيذي بشركة استشارات عالمية</h3>
+                                <p class="text-xs text-slate-600 mt-1">تبارك أمانة الأسرة ومجلسها لابنها فيصل، سائلين المولى له دوام التوفيق والرفعة في خدمة دينه ووطنه.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة وفاة وتعزية (إنا لله وإنا إليه راجعون) -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-300 bg-stone-50/50">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-stone-200 text-stone-700 flex items-center justify-center text-xl shrink-0">
+                                <i class="fa-solid fa-moon"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] bg-stone-200 text-stone-800 font-bold px-2 py-0.5 rounded-md">إنا لله وإنا إليه راجعون 🕊️</span>
+                                    <span class="text-[10px] text-slate-400">قبل 4 أيام</span>
+                                </div>
+                                <h3 class="font-bold text-sm text-slate-900 mt-1">انتقلت إلى رحمة الله تعالى العمة / حصة بنت إبراهيم بن يحيى</h3>
+                                <p class="text-xs text-slate-600 mt-1">تمت الصلاة عليها في جامع الراجحي بالرياض والدفن بمقبرة النسيم. يقام العزاء في منزل ابنها بحي الصحافة.</p>
+                                
+                                <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                                    <a href="https://maps.google.com" target="_blank" class="bg-white border border-stone-300 hover:bg-stone-100 text-slate-700 font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs">
+                                        <i class="fa-solid fa-location-dot text-red-600"></i> موقع المقبرة ومجلس العزاء
+                                    </a>
+                                    <button onclick="alert('تم تدوين رسالة تعزيتك وسيتم تسليمها لذوي الفقيدة رحمها الله.')" class="bg-stone-700 hover:bg-stone-800 text-white font-bold px-3 py-1.5 rounded-xl">
+                                        تدوين تعزية إلكترونية
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- إحصائيات السجل المدني للأسرة -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="font-bold text-base text-slate-900 flex items-center gap-2 border-b pb-3">
+                        <i class="fa-solid fa-chart-pie text-accent"></i> إحصائيات السجل الأسري 2026
+                    </h3>
+                    <div class="space-y-2.5 text-xs">
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <span class="text-slate-600 font-semibold">إجمالي أفراد الأسرة المقيدين:</span>
+                            <span class="text-sm font-bold text-slate-900 font-mono">1,480 فرد</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <span class="text-slate-600 font-semibold">الذكور / الإناث:</span>
+                            <span class="text-sm font-bold text-slate-900 font-mono">760 ذكور • 720 إناث</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <span class="text-slate-600 font-semibold">مواليد العام الحالي (2026):</span>
+                            <span class="text-sm font-bold text-emerald-600 font-mono">+32 مولود</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <span class="text-slate-600 font-semibold">عدد العوائل المستقلة:</span>
+                            <span class="text-sm font-bold text-slate-900 font-mono">215 عائلة</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                            <span class="text-slate-600 font-semibold">نسبة اكتمال الهوية والتوثيق:</span>
+                            <span class="text-sm font-bold text-primary font-mono">96.4%</span>
+                        </div>
+                    </div>
+
+                    <button onclick="openModal('addVitalModal')" class="w-full mt-2 bg-primary hover:bg-primaryLight text-white py-2.5 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-file-circle-plus"></i> رفع طلب توثيق واقعة جديدة
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. الصندوق والأوقاف والتكافل المالي (مع إضافة لوحة Chart.js) -->
+        <section id="section-fund" class="tab-content hidden space-y-6">
+            <!-- البطاقات المالية الرئيسية -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-gradient-to-br from-primary to-darkGreen text-white p-5 rounded-2xl shadow-sm relative overflow-hidden">
+                    <div class="text-xs font-semibold text-emerald-300">الرصيد الكلي لصندوق الأسرة العام</div>
+                    <div class="text-3xl font-extrabold mt-1.5 font-mono" id="fundBalanceDisplay">284,500 <span class="text-sm font-sans font-normal text-emerald-200">ريال</span></div>
+                    <div class="mt-4 text-xs text-emerald-100 border-t border-emerald-800/80 pt-2.5 flex justify-between">
+                        <span>ريع الأوقاف السنوي المحصل:</span>
+                        <span class="font-bold text-accent font-mono">92,000 ريال</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-500 font-bold">اشتراكك السنوي الموحد (2026)</span>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">مستحق السداد</span>
+                        </div>
+                        <div class="text-2xl font-bold text-slate-900 mt-1 font-mono">1,200 <span class="text-xs font-sans text-slate-500 font-normal">ريال / سنوياً</span></div>
+                    </div>
+                    <button onclick="processQuickPay()" class="w-full mt-3 bg-secondary hover:bg-primary text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition">
+                        <i class="fa-brands fa-apple-pay text-lg"></i> سداد فوري بـ Apple Pay / مدى
+                    </button>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs text-slate-500 font-bold">حملات التكافل وتفريج الكرب</span>
+                        <div class="text-sm font-bold text-slate-900 mt-1 flex items-center justify-between">
+                            <span>مبادرة تيسير زواج شباب الأسرة</span>
+                            <span class="text-xs text-emerald-700 font-bold">75%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+                            <div class="bg-accent h-full rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <button onclick="alert('الحساب المعتمد لمبادرة الزواج:\nIBAN: SA0380000201608010009999\nمصرف الراجحي - أمانة صندوق الأسرة')" class="w-full mt-3 bg-slate-50 hover:bg-slate-100 text-slate-700 py-2 rounded-xl text-xs font-bold border border-slate-300">
+                        عرض حساب التبرع المباشر (IBAN)
+                    </button>
+                </div>
+            </div>
+
+            <!-- لوحة إحصائيات الأوقاف والشفافية -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- سجل العمليات المالية الأخيرة -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-secondary"></i> الشفافية المالية وسجل المصروفات والإيرادات
+                    </h3>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-xs text-right">
+                            <thead class="bg-slate-50 text-slate-500">
+                                <tr>
+                                    <th class="p-2.5">التاريخ</th>
+                                    <th class="p-2.5">البيان</th>
+                                    <th class="p-2.5">المبلغ</th>
+                                    <th class="p-2.5">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="p-2.5 text-slate-500">18 أغسطس 2026</td>
+                                    <td class="p-2.5 font-medium">سداد دفعة إيجار قاعة اللقاء السنوي</td>
+                                    <td class="p-2.5 font-bold text-red-600 font-mono">-18,000 ريال</td>
+                                    <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 font-bold">معتمد</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-slate-500">01 أغسطس 2026</td>
+                                    <td class="p-2.5 font-medium">إيداع اشتراكات أعضاء فرع الرياض</td>
+                                    <td class="p-2.5 font-bold text-emerald-600 font-mono">+42,000 ريال</td>
+                                    <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-bold">محصل</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 text-slate-500">20 يوليو 2026</td>
+                                    <td class="p-2.5 font-medium">مكافآت المتفوقين علمياً وحفظة القرآن</td>
+                                    <td class="p-2.5 font-bold text-red-600 font-mono">-12,500 ريال</td>
+                                    <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 font-bold">معتمد</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- أوقاف الأسرة المشرفة + رسم بياني -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-accent"></i> إيرادات الأوقاف السنوية (بالألف ريال)
+                    </h3>
+                    <div class="relative h-40 w-full flex justify-center mb-4">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                    <div class="space-y-3 text-xs border-t border-slate-100 pt-3">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-bold text-slate-900">وقف نخل وبساتين "الوسيطى"</h4>
+                                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">عقار زراعي</span>
+                            </div>
+                            <div class="mt-1 text-[11px] text-primary font-bold">الناظر: مجلس النظارة الأسري المعتمد</div>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-bold text-slate-900">عمارة الوقف التجاري بحي الملز</h4>
+                                <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">عقار تجاري</span>
+                            </div>
+                            <div class="mt-1 text-[11px] text-primary font-bold">الناظر: لجنة تنمية الموارد والأوقاف</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- (جديد) 13. بنك الدم والطوارئ -->
+        <section id="section-bloodBank" class="tab-content hidden space-y-6">
+            <div class="bg-red-50 p-5 rounded-2xl border-2 border-red-200 shadow-sm relative overflow-hidden">
+                <div class="absolute -left-4 -top-4 text-red-100 opacity-50 text-8xl"><i class="fa-solid fa-droplet"></i></div>
+                <div class="relative z-10 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
+                    <div class="flex gap-4 items-center">
+                        <div class="w-14 h-14 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-2xl shadow-md">O-</div>
+                        <div>
+                            <span class="text-[10px] bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded flex items-center gap-1 w-max mb-1"><span class="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span> نداء عاجل جداً</span>
+                            <h3 class="font-bold text-base text-slate-900">حاجة ماسة للتبرع بالدم (فصيلة O سالب)</h3>
+                            <p class="text-xs text-slate-700 mt-1"><i class="fa-solid fa-hospital text-red-500"></i> مستشفى الملك فيصل التخصصي بالرياض - باسم المريض: خالد بن محمد</p>
+                        </div>
+                    </div>
+                    <button onclick="alert('تم تحويلك لصفحة التبرع وتزويدك برقم الملف الطبي للمريض.')" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl text-xs shadow-md whitespace-nowrap">
+                        <i class="fa-solid fa-hand-holding-medical"></i> أنا مستعد للتبرع
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-sm text-slate-900 mb-4 border-b pb-2">فصيلة دمك المسجلة بالبوابة</h3>
+                    <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center font-bold text-lg">A+</div>
+                            <div class="text-xs">
+                                <p class="font-bold text-slate-800">حالتك: لائق للتبرع</p>
+                                <p class="text-slate-500">آخر تبرع: قبل 6 أشهر</p>
+                            </div>
+                        </div>
+                        <input type="checkbox" checked class="w-4 h-4 text-primary rounded" title="تفعيل استقبال إشعارات الطوارئ">
+                    </div>
+                </div>
+                
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-sm text-slate-900 mb-4 border-b pb-2">سجل المتبرعين الشرفي للأسرة</h3>
+                    <ul class="space-y-2 text-xs">
+                        <li class="flex justify-between items-center p-2 hover:bg-slate-50 rounded">
+                            <span class="font-bold text-slate-700">1. إبراهيم بن عبدالرحمن</span>
+                            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">12 تبرع</span>
+                        </li>
+                        <li class="flex justify-between items-center p-2 hover:bg-slate-50 rounded">
+                            <span class="font-bold text-slate-700">2. فيصل بن سليمان</span>
+                            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">8 تبرعات</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. جائزة التفوق العلمي ولوحة الشرف -->
+        <section id="section-awards" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 border-b pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-accent"></i> جائزة الأسرة للتفوق العلمي والابتكار
+                        </h2>
+                        <p class="text-xs text-slate-500">لتكريم حفظة القرآن الكريم، الحاصلين على الدكتوراه والماجستير، والمتفوقين دراسياً</p>
+                    </div>
+                    <button onclick="openModal('awardNominationModal')" class="bg-primary hover:bg-primaryLight text-white px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-arrow-up"></i> رفع ملف ترشح للجائزة (1448هـ)
+                    </button>
+                </div>
+
+                <!-- لوحة الشرف لدورة 1447هـ -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-200 text-center">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-800 rounded-full flex items-center justify-center font-black mx-auto mb-2 text-xl shadow-xs">
+                            <i class="fa-solid fa-quran"></i>
+                        </div>
+                        <span class="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-bold">القرآن الكريم</span>
+                        <h4 class="font-bold text-xs text-slate-900 mt-2">سليمان بن إبراهيم بن يحيى</h4>
+                        <p class="text-[11px] text-amber-800 font-bold mt-0.5">إتمام حفظ القرآن الكريم برواية حفص</p>
+                        <span class="text-[10px] text-slate-400 block mt-1">فرع القصيم</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-blue-50/60 border border-blue-200 text-center">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center font-black mx-auto mb-2 text-xl shadow-xs">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <span class="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded font-bold">الدكتوراه</span>
+                        <h4 class="font-bold text-xs text-slate-900 mt-2">د. ريم بنت محمد بن صالح</h4>
+                        <p class="text-[11px] text-blue-800 font-bold mt-0.5">دكتوراه في الذكاء الاصطناعي الحيوي</p>
+                        <span class="text-[10px] text-slate-400 block mt-1">جامعة الملك سعود</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 text-center">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center font-black mx-auto mb-2 text-xl shadow-xs">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                        <span class="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded font-bold">الماجستير</span>
+                        <h4 class="font-bold text-xs text-slate-900 mt-2">م. عمر بن صالح بن يحيى</h4>
+                        <p class="text-[11px] text-emerald-800 font-bold mt-0.5">ماجستير هندسة الطاقة المتجددة</p>
+                        <span class="text-[10px] text-slate-400 block mt-1">جامعة KFUPM (مرتبة الشرف)</span>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-purple-50/60 border border-purple-200 text-center">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-800 rounded-full flex items-center justify-center font-black mx-auto mb-2 text-xl shadow-xs">
+                            <i class="fa-solid fa-school"></i>
+                        </div>
+                        <span class="text-[10px] bg-purple-200 text-purple-900 px-2 py-0.5 rounded font-bold">المرحلة الثانوية</span>
+                        <h4 class="font-bold text-xs text-slate-900 mt-2">سارة بنت فيصل بن سليمان</h4>
+                        <p class="text-[11px] text-purple-800 font-bold mt-0.5">التفوق بمعدل (99.85%) والقدرات</p>
+                        <span class="text-[10px] text-slate-400 block mt-1">مدارس الرياض</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. الأرشيف التراثي والذكاء الاصطناعي (AI Restoration & OCR) -->
+        <section id="section-archive" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-accent"></i> مختبر الذكاء الاصطناعي للذاكرة والتراث
+                    </h2>
+                    <p class="text-xs text-slate-500">معالجة وترميم الصور التذكارية القديمة وقراءة المخطوطات والوصايا بالتعرف الضوئي التراثي</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- أداة ترميم الصور القديمة -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-bold text-xs text-slate-800">ترميم وتلوين صورة مجلس العائلة القديم (عام 1385هـ)</h4>
+                                <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Heritage-AI</span>
+                            </div>
+                            <div class="relative w-full h-52 bg-stone-900 rounded-xl overflow-hidden flex items-center justify-center p-3 border border-slate-300">
+                                <div id="photoOld" class="absolute inset-0 bg-stone-700/90 flex flex-col items-center justify-center text-center p-4 text-stone-300">
+                                    <i class="fa-solid fa-image text-3xl mb-2 text-stone-400"></i>
+                                    <span class="text-xs font-bold">[صورة أرشيفية أبيض وأسود مع بهتان وخدوش زمنية]</span>
+                                    <span class="text-[10px] text-stone-400 mt-1">الصورة الأصلية قبل المعالجة</span>
+                                </div>
+                                <div id="photoEnhanced" class="absolute inset-0 bg-emerald-950 flex flex-col items-center justify-center text-center p-4 text-emerald-100 hidden">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-3xl mb-2 text-accent animate-bounce"></i>
+                                    <span class="text-xs font-bold text-white">[صورة فائقة الدقة 4K ملونة واقعياً ومصححة الملامح]</span>
+                                    <span class="text-[10px] text-accent font-semibold mt-1">تم الترميم بنجاح بنموذج الشبكات التوليدية</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="toggleAiPhoto(false)" class="flex-1 py-2 text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl">الأصلية (قبل)</button>
+                            <button onclick="toggleAiPhoto(true)" class="flex-1 py-2 text-xs font-bold bg-primary hover:bg-primaryLight text-white rounded-xl shadow">المعالجة بالذكاء الاصطناعي (بعد) ✨</button>
+                        </div>
+                    </div>
+
+                    <!-- أداة استخراج نصوص الوصايا (OCR) -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-bold text-xs text-slate-800">التعرف الضوئي على خط اليد التاريخي (Historic Arabic OCR)</h4>
+                                <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Doc-AI</span>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-xl border border-slate-200 text-xs min-h-[145px]" id="ocrResultBox">
+                                <div class="text-slate-500 font-serif leading-relaxed">
+                                    "بسم الله الرحمن الرحيم، هذا ما أوقف وحبس فلان بن فلان على ذريته من بعده، وجعل النظر فيه للأرشد فالأرشد..."
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="runOcrSimulation()" class="w-full mt-3 bg-accent hover:bg-accentHover text-darkGreen font-bold py-2.5 rounded-xl text-xs shadow flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-bolt"></i> تشغيل الفهرسة واستخراج الكيانات والأنساب
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. الرواية الشفهية والقصائد (Oral History) -->
+        <section id="section-oralHistory" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-5 border-b pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-microphone-lines text-secondary"></i> أرشيف الرواية الشفهية وقصائد الأسرة
+                        </h2>
+                        <p class="text-xs text-slate-500">توثيق صوتي ومرئي لذكريات كبار السن، وقصائد وأحداث تاريخية يرويها أصحابها</p>
+                    </div>
+                    <button onclick="alert('تم فتح نافذة تسجيل مقابلة شفهية جديدة مع أحد كبار السن.');" class="bg-secondary hover:bg-primary text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-microphone"></i> تسجيل رواية جديدة
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <!-- تسجيل 1 -->
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">ذكريات تاريخية</span>
+                            <span class="text-slate-400 text-[10px]">14 دقيقة</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">سالفة بناء أول مجلس للأسرة في بريدة عام 1370هـ</h4>
+                        <p class="text-slate-500">يرويها العم / محمد بن صالح رحمه الله، ويسرد فيها تفاصيل التعاون والتكافل بين أبناء العمومة.</p>
+                        <button onclick="alert('جاري تشغيل المقطع الصوتي المسجل...');" class="w-full py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play text-primary"></i> الاستماع للتسجيل الصوتي
+                        </button>
+                    </div>
+
+                    <!-- تسجيل 2 -->
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">قصائد ومحاورات</span>
+                            <span class="text-slate-400 text-[10px]">6 دقائق</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">قصيدة الفخر والصلة في اجتماع عام 1412هـ</h4>
+                        <p class="text-slate-500">إلقاء الشاعر إبراهيم بن صالح، يوصي فيها الجيل الصاعد بصلة الرحم والتمسك بالأصول.</p>
+                        <button onclick="alert('جاري تشغيل المقطع الصوتي...');" class="w-full py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play text-primary"></i> الاستماع للتسجيل الصوتي
+                        </button>
+                    </div>
+
+                    <!-- تسجيل 3 -->
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">وثائقي مرئي</span>
+                            <span class="text-slate-400 text-[10px]">22 دقيقة</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">رحلة الكفاح والتعليم لفرع الرياض</h4>
+                        <p class="text-slate-500">حوار مسجل مع رواد التعليم من أبناء الأسرة الذين التحقوا بالجامعات في بدايات النهضة.</p>
+                        <button onclick="alert('جاري تشغيل الفيديو الأرشيفي...');" class="w-full py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-video text-primary"></i> مشاهدة المقابلة المرئية
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. دليل المجالس والدواوين -->
+        <section id="section-majlis" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-mug-hot text-accent"></i> دليل مجالس ودواوين الأسرة
+                    </h2>
+                    <p class="text-xs text-slate-500">مواعيد استقبال الوجهاء والمجالس الأسبوعية والشهرية لصلة الرحم والضيافة</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-sm text-slate-900">ديوانية الشيخ محمد بن صالح</h4>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">أسبوعي</span>
+                        </div>
+                        <p class="text-slate-600"><i class="fa-regular fa-clock text-accent"></i> <strong>الموعد:</strong> كل يوم ثلاثاء بعد صلاة العشاء</p>
+                        <p class="text-slate-600"><i class="fa-solid fa-location-dot text-red-500"></i> <strong>المقر:</strong> الرياض - حي حطين</p>
+                        <button onclick="window.open('https://maps.google.com', '_blank')" class="w-full py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-map-location-dot text-primary"></i> فتح الموقع في خرائط Google
+                        </button>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-sm text-slate-900">مجلس الأسرة بالقصيم</h4>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">شهري</span>
+                        </div>
+                        <p class="text-slate-600"><i class="fa-regular fa-clock text-accent"></i> <strong>الموعد:</strong> أول جمعة من كل شهر هجري بعد المغرب</p>
+                        <p class="text-slate-600"><i class="fa-solid fa-location-dot text-red-500"></i> <strong>المقر:</strong> بريدة - قاعة الضيافة التراثية</p>
+                        <button onclick="window.open('https://maps.google.com', '_blank')" class="w-full py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-map-location-dot text-primary"></i> فتح الموقع في خرائط Google
+                        </button>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-sm text-slate-900">ديوانية شباب الأسرة بالشرقية</h4>
+                            <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">نصف شهري</span>
+                        </div>
+                        <p class="text-slate-600"><i class="fa-regular fa-clock text-accent"></i> <strong>الموعد:</strong> خميس بعد خميس بعد صلاة العشاء</p>
+                        <p class="text-slate-600"><i class="fa-solid fa-location-dot text-red-500"></i> <strong>المقر:</strong> الخبر - مجلس أبناء سليمان</p>
+                        <button onclick="window.open('https://maps.google.com', '_blank')" class="w-full py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-map-location-dot text-primary"></i> فتح الموقع في خرائط Google
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. تجارة وعروض وخصومات الأسرة (Family Perks & Businesses) -->
+        <section id="section-perks" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-5 border-b pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-accent"></i> دليل تجارة ومزايا الأسرة (خصومات حصرية)
+                        </h2>
+                        <p class="text-xs text-slate-500">عروض وتخفيضات يقدمها رواد الأعمال والشركات من أبناء الأسرة لأقاربهم</p>
+                    </div>
+                    <button onclick="alert('تم فتح نموذج إضافة عرض أو خصم تجاري خاص بأبناء الأسرة.');" class="bg-primary hover:bg-primaryLight text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> إضافة نشاطك التجاري / عرضك
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                    <!-- بطاقة متجر 1 -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded">خصم 25%</span>
+                                <span class="text-slate-400 text-[10px]">استشارات هندسية</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-2">مكتب الـيحيى للاستشارات والتصميم النجدي</h4>
+                            <p class="text-slate-500 mt-1">خصم حصري على مخططات الفلل والتصميم الداخلي والإشراف الهندسي لكافة أفراد الأسرة.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                            <span class="font-mono font-bold text-primary bg-emerald-100 px-2 py-1 rounded">كود: YAHYA25</span>
+                            <button onclick="alert('تم نسخ الكود ورابط التواصل مع المكتب الهندسي.');" class="text-primary font-bold hover:underline">طلب العرض</button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة متجر 2 -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">خصم 20%</span>
+                                <span class="text-slate-400 text-[10px]">تمور ومحاصيل فاخرة</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-2">مزارع الوسيطى للتمور السكرية الفاخرة</h4>
+                            <p class="text-slate-500 mt-1">توصيل مجاني للرياض والقصيم مع كرتون إضافي هدية في مواسم جني التمور.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                            <span class="font-mono font-bold text-primary bg-emerald-100 px-2 py-1 rounded">كود: NAKHIL20</span>
+                            <button onclick="alert('تم تفعيل خصم التمور لأفراد العائلة.');" class="text-primary font-bold hover:underline">طلب العرض</button>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة متجر 3 -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">استشارة مجانية</span>
+                                <span class="text-slate-400 text-[10px]">استشارات قانونية وتوثيق</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-2">شركة فيصل بن سليمان للمحاماة</h4>
+                            <p class="text-slate-500 mt-1">تقديم استشارات قانونية مجانية وصياغة عقود تأسيس الشركات لرواد الأعمال من شباب الأسرة.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                            <span class="font-mono font-bold text-primary bg-emerald-100 px-2 py-1 rounded">كود: LAW-FAMILY</span>
+                            <button onclick="alert('تم توجيهك لصفحة حجز موعد الاستشارة القانونية.');" class="text-primary font-bold hover:underline">حجز استشارة</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. دليل الكفاءات والتوظيف -->
+        <section id="section-directory" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-5">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-briefcase text-secondary"></i> دليل الكفاءات والخبرات المهنية
+                        </h2>
+                        <p class="text-xs text-slate-500">شبكة تواصل مهنية داخلية تهدف لتبادل الخبرات وتسهيل توظيف وتدريب الخريجين</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded">تقنية وحلول سحابية</span>
+                        <h4 class="font-bold text-sm text-slate-900 mt-2">م. عبدالله بن محمد</h4>
+                        <p class="text-slate-500 mt-1">مهندس معماري سحابي وذكاء اصطناعي، يقدم إرشاداً تقنياً لطلاب علوم الحاسب.</p>
+                        <button onclick="alert('تم إرسال بطاقة طلب التواصل المهني.')" class="mt-3 text-primary font-bold hover:underline block">طلب تواصل وتوجيه مهني</button>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <span class="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded">طب ورعاية صحية</span>
+                        <h4 class="font-bold text-sm text-slate-900 mt-2">د. إبراهيم بن عبدالرحمن</h4>
+                        <p class="text-slate-500 mt-1">استشاري باطنية، متاح لتقديم النصائح الطبية والتوجيه للمراكز المتخصصة.</p>
+                        <button onclick="alert('تم حجز استشارة أسرية مع الطبيب.')" class="mt-3 text-primary font-bold hover:underline block">حجز استشارة أسرية</button>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <span class="text-[10px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded">مالية واستثمار</span>
+                        <h4 class="font-bold text-sm text-slate-900 mt-2">أ. سعد بن محمد</h4>
+                        <p class="text-slate-500 mt-1">محلل مالي معتمد، يقدم استشارات إدارة المحافظ الاستثمارية والتخطيط المالي.</p>
+                        <button onclick="alert('تم توجيه طلب المشورة المالية.')" class="mt-3 text-primary font-bold hover:underline block">استشارة استثمارية</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. اللجان والشورى والتصويت الأسري (مع دمج لوحة Chart.js) -->
+        <section id="section-governance" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- استطلاعات الشورى والتصويت المباشر -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-square-poll-vertical text-secondary"></i> الشورى واستطلاعات الرأي الفعالة
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">شارك بصوتك في اتخاذ القرارات وتحديد مواعيد وفعاليات الأسرة الكبرى</p>
+                    </div>
+
+                    <!-- استطلاع 1 نشط -->
+                    <div class="p-5 rounded-xl bg-emerald-50/50 border border-emerald-200 text-xs space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded">تصويت جاري</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">المكان المفضل لمخيم الأسرة الشتوي 1448هـ؟</h4>
+
+                        <div class="space-y-2 pt-1" id="pollOptionsContainer">
+                            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-primary">
+                                <input type="radio" name="winterPoll" value="1" class="text-primary focus:ring-primary">
+                                <span class="font-bold text-slate-800">مخيم الثمامة بالرياض</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-primary">
+                                <input type="radio" name="winterPoll" value="2" class="text-primary focus:ring-primary">
+                                <span class="font-bold text-slate-800">مزرعة وبساتين الأسرة بالقصيم</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-primary">
+                                <input type="radio" name="winterPoll" value="3" class="text-primary focus:ring-primary">
+                                <span class="font-bold text-slate-800">مخيم شاطئي بالمنطقة الشرقية</span>
+                            </label>
+                        </div>
+
+                        <div class="pt-2 flex items-center justify-between">
+                            <button onclick="submitPollVote()" id="btnSubmitVote" class="bg-primary hover:bg-primaryLight text-white font-bold px-5 py-2 rounded-xl shadow-xs transition">
+                                تأكيد وإرسال صوتي
+                            </button>
+                            <span id="voteConfirmedLabel" class="text-emerald-700 font-bold hidden">✓ تم تسجيل صوتك!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- اللجان ولوحة نتائج الشورى -->
+                <div class="space-y-6">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar text-accent"></i> نتائج التصويت المباشرة (Live)
+                        </h3>
+                        <div class="relative h-40 w-full flex justify-center">
+                            <canvas id="pollChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-users-gear text-primary"></i> لجان مجلس الأسرة التنفيذي
+                        </h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                                <div><div class="font-bold text-primary text-[10px]">الأمناء والأعيان</div><div class="font-bold text-slate-900 mt-0.5">د. عبدالرحمن بن صالح</div></div>
+                                <button onclick="alert('تم فتح المراسلة.')" class="text-primary font-bold hover:underline">مراسلة</button>
+                            </div>
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                                <div><div class="font-bold text-primary text-[10px]">الأنساب والوثائق</div><div class="font-bold text-slate-900 mt-0.5">م. عبدالله بن محمد</div></div>
+                                <button onclick="alert('تم رفع الطلب.')" class="text-primary font-bold hover:underline">تعديل الشجرة</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 11. تحدي ومسابقات تاريخ الأسرة (Heritage Trivia Game) -->
+        <section id="section-quiz" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto">
+                <div class="text-center mb-6">
+                    <div class="w-14 h-14 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center font-black mx-auto mb-2 text-2xl shadow-inner">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">تحدي الذاكرة وتاريخ الأسرة (للأبناء والشباب)</h2>
+                    <p class="text-xs text-slate-500 mt-1">اختبر معلوماتك حول تاريخ الأجداد، الوثائق، والشخصيات البارزة واجمع النقاط</p>
+                </div>
+
+                <div id="quizContainer" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4 text-xs">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span class="font-bold text-slate-600" id="quizProgress">السؤال 1 من 3</span>
+                        <span class="bg-accent text-darkGreen px-2 py-0.5 rounded-full font-bold font-mono" id="quizScore">النقاط: 0</span>
+                    </div>
+
+                    <div id="quizQuestion" class="font-bold text-sm text-slate-900 leading-relaxed">
+                        في أي عام هجري تم تأسيس وقف مزرعة "الوسيطى" الشهيرة التابعة للأسرة؟
+                    </div>
+
+                    <div class="space-y-2" id="quizAnswers">
+                        <button onclick="answerQuiz(0)" class="quiz-btn w-full text-right p-3 bg-white rounded-xl border border-slate-200 font-bold text-slate-800 hover:bg-slate-100 transition">
+                            أ) عام 1342هـ
+                        </button>
+                        <button onclick="answerQuiz(1)" class="quiz-btn w-full text-right p-3 bg-white rounded-xl border border-slate-200 font-bold text-slate-800 hover:bg-slate-100 transition">
+                            ب) عام 1365هـ
+                        </button>
+                        <button onclick="answerQuiz(2)" class="quiz-btn w-full text-right p-3 bg-white rounded-xl border border-slate-200 font-bold text-slate-800 hover:bg-slate-100 transition">
+                            ج) عام 1390هـ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 12. اللقاءات والمناسبات وتأكيد الحضور (RSVP) -->
+        <section id="section-events" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-accent"></i> المناسبات واللقاءات السنوية الرسمية
+                    </h2>
+                    <p class="text-xs text-slate-500">تأكيد الحضور (RSVP)، مواقع القاعات في الخرائط، وجدول أعمال اللقاءات</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- المناسبة 1 الكبرى -->
+                    <div class="p-5 rounded-2xl border border-emerald-200 bg-emerald-50/40 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-primary text-white p-3 rounded-2xl text-center min-w-[75px] shadow-sm">
+                                <div class="text-[10px] font-semibold text-emerald-200">سبتمبر 2026</div>
+                                <div class="text-2xl font-black">04</div>
+                                <div class="text-[10px] text-accent">الجمعة</div>
+                            </div>
+                            <div>
+                                <span class="bg-emerald-200 text-emerald-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full">اللقاء السنوي الكبير (1448هـ)</span>
+                                <h3 class="font-bold text-base text-slate-900 mt-1">حفل اجتماع الأسرة السنوي وتكريم المتفوقين</h3>
+                                <p class="text-xs text-slate-600 mt-1"><i class="fa-solid fa-location-dot text-red-500"></i> قاعة الاحتفالات الكبرى - طريق الملك سلمان • الساعة 07:30 م</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                            <div class="text-right">
+                                <div class="text-xs font-bold text-slate-800" id="rsvpCounterText">143 عضواً أكدوا الحضور</div>
+                                <div class="text-[10px] text-slate-400">ينتهي التأكيد بعد 10 أيام</div>
+                            </div>
+                            <button id="btnMainRsvp" onclick="toggleMainRsvp()" class="bg-primary hover:bg-secondary text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow transition">
+                                تأكيد حضوري (RSVP)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- المناسبة 2: حفل زواج -->
+                    <div class="p-5 rounded-2xl border border-slate-200 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-slate-100 text-slate-800 p-3 rounded-2xl text-center min-w-[75px] border border-slate-200">
+                                <div class="text-[10px] font-semibold text-slate-500">أكتوبر 2026</div>
+                                <div class="text-2xl font-black">12</div>
+                                <div class="text-[10px] text-slate-400">الإثنين</div>
+                            </div>
+                            <div>
+                                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">حفل زواج مبارك 💍</span>
+                                <h3 class="font-bold text-base text-slate-900 mt-1">حفل زفاف الشاب المهندس / عمر بن صالح</h3>
+                                <p class="text-xs text-slate-600 mt-1"><i class="fa-solid fa-location-dot text-red-500"></i> فندق الريتز كارلتون - القاعة الكبرى • بعد صلاة العشاء</p>
+                            </div>
+                        </div>
+                        <button onclick="alert('تمت إضافة موعد الزفاف بنجاح إلى تقويم جوالك (Apple / Google Calendar).')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs border border-slate-300">
+                            <i class="fa-regular fa-calendar-plus ml-1"></i> إضافة للتقويم
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- النوافذ المنبثقة التفاعلية (Modals) -->
+
+    <!-- (جديد) البطاقة الرقمية الذكية (Digital Family ID) -->
+    <div id="digitalIdModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="w-full max-w-sm relative animate-in zoom-in duration-200">
+            <button onclick="closeModal('digitalIdModal')" class="absolute -top-10 right-0 text-white hover:text-slate-300 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <div class="qr-gradient rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden border border-emerald-700/50">
+                <i class="fa-solid fa-tree absolute -bottom-10 -left-10 text-9xl opacity-5"></i>
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="font-bold text-lg text-accent">بوابة الأسرة الرقمية</h2>
+                        <p class="text-[10px] text-emerald-200">بطاقة عضوية معتمدة | Member ID</p>
+                    </div>
+                    <div class="w-10 h-10 bg-white/10 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/20">
+                        <i class="fa-solid fa-shield-halved text-accent text-xl"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl flex flex-col items-center justify-center mb-6 shadow-inner">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=FamilyID-40291-Saleh-Abdullah" alt="QR Code" class="w-32 h-32 opacity-90 rounded">
+                    <p class="text-[10px] text-slate-400 mt-2 font-mono tracking-widest">ID: 40291-2026</p>
+                </div>
+                <div class="space-y-1">
+                    <div class="text-[10px] text-emerald-300">الاسم الكامل</div>
+                    <div class="font-bold text-base leading-none">صالح بن عبدالله بن محمد</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-emerald-800/60">
+                    <div>
+                        <div class="text-[10px] text-emerald-300">الفرع / المدينة</div>
+                        <div class="font-bold text-sm">الرياض</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-emerald-300">حالة العضوية</div>
+                        <div class="font-bold text-sm flex items-center gap-1"><i class="fa-solid fa-circle-check text-accent text-[10px]"></i> نشط وفعال</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-xs text-white/60 mt-4">استخدم هذا الرمز عند بوابات الدخول للمناسبات أو للحصول على خصومات المتاجر العائلية.</p>
+        </div>
+    </div>
+
+    <!-- نافذة إعدادات الخصوصية ومحفظة الوثائق (مدمجة) -->
+    <div id="privacyModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex justify-end">
+        <div class="bg-white w-full max-w-sm h-full shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-sm text-slate-900">الملف الشخصي والإعدادات</h3>
+                <button onclick="closeModal('privacyModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-5 flex-1 overflow-y-auto space-y-6">
+                <!-- محفظة الوثائق (جديد) -->
+                <div>
+                    <h4 class="font-bold text-xs text-slate-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-folder-closed text-accent"></i> الخزنة والوثائق المعتمدة</h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs text-center">
+                        <div class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
+                            <i class="fa-solid fa-file-certificate text-2xl text-slate-400 mb-2"></i>
+                            <p class="font-bold text-slate-700">شهادة العائلة</p>
+                        </div>
+                        <div class="p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
+                            <i class="fa-solid fa-file-contract text-2xl text-slate-400 mb-2"></i>
+                            <p class="font-bold text-slate-700">صك حصر الورثة</p>
+                        </div>
+                        <button class="col-span-2 py-2 bg-slate-100 text-primary font-bold rounded-xl border border-slate-200 border-dashed">
+                            <i class="fa-solid fa-plus"></i> رفع وثيقة جديدة للتوثيق
+                        </button>
+                    </div>
+                </div>
+
+                <!-- إعدادات الخصوصية (أساسية) -->
+                <div>
+                    <h4 class="font-bold text-xs text-slate-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-user-shield text-primary"></i> إعدادات الخصوصية</h4>
+                    <div class="space-y-2 text-xs">
+                        <label class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="font-bold text-slate-700">إظهار رقم هاتفي لعموم الأسرة</span>
+                            <input type="checkbox" checked class="w-4 h-4 text-primary rounded">
+                        </label>
+                        <label class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="font-bold text-slate-700">استقبال تنبيهات المناسبات عبر SMS</span>
+                            <input type="checkbox" checked class="w-4 h-4 text-primary rounded">
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-slate-100 bg-slate-50">
+                <button class="w-full py-2.5 text-xs font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition">
+                    تسجيل الخروج
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة استعراض بيانات الفرد والشجرة -->
+    <div id="personModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 relative border border-slate-200 text-xs">
+            <button onclick="closeModal('personModal')" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-primary font-black text-base flex items-center justify-center" id="mAvatar">ص</div>
+                <div>
+                    <h3 class="font-bold text-sm text-slate-900" id="mName">اسم الفرد</h3>
+                    <p class="text-[11px] text-emerald-700 font-bold" id="mBranch">الفرع</p>
+                </div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl space-y-1.5 border border-slate-200 mb-4">
+                <p><strong>المقر والإقامة:</strong> <span id="mCity">الرياض</span></p>
+                <p><strong>الفترة / العمر:</strong> <span id="mDates" class="font-mono text-slate-600">-</span></p>
+                <p><strong>حالة التوثيق:</strong> <span id="mStatus" class="text-emerald-700 font-bold">موثق</span></p>
+                <div class="pt-1.5 border-t border-slate-200">
+                    <strong class="block mb-0.5 text-slate-600">السيرة والنبذة:</strong>
+                    <p id="mBio" class="text-slate-700 leading-relaxed">-</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="alert('تم إرسال طلب تواصل عائلي.');" class="flex-1 bg-primary hover:bg-primaryLight text-white py-2 rounded-xl font-bold">إرسال بطاقة تواصل</button>
+                <button onclick="closeModal('personModal')" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تسجيل واقعة أسرية (مولود / وفاة / زواج) -->
+    <div id="addVitalModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-5 relative border border-slate-200 text-xs">
+            <button onclick="closeModal('addVitalModal')" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="font-bold text-sm text-slate-900 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-circle-plus text-primary"></i> تسجيل واقعة أسرية جديدة
+            </h3>
+            <p class="text-[11px] text-slate-500 mb-3">تخضع الطلبات للمراجعة والتدقيق من قبل لجنة الأنساب قبل اعتمادها في الشجرة.</p>
+            <form onsubmit="handleVitalSubmit(event)" class="space-y-2.5">
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">نوع الواقعة</label>
+                    <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-semibold">
+                        <option>مولود جديد 👶</option>
+                        <option>حالة زواج 💍</option>
+                        <option>حالة وفاة 🕊️</option>
+                        <option>إنجاز / ترقية علمية أو مهنية 🎓</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">الاسم الكامل للمعني بالواقعة</label>
+                    <input type="text" required placeholder="الاسم الرباعي واللقب" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold mb-1 text-slate-700">تاريخ الواقعة</label>
+                        <input type="date" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1 text-slate-700">الفرع العائلي</label>
+                        <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-semibold">
+                            <option>فرع الرياض</option>
+                            <option>فرع القصيم</option>
+                            <option>فرع الشرقية</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">إرفاق إشعار أو شهادة رسمية (اختياري)</label>
+                    <input type="file" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-1.5 text-[11px]">
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-primaryLight text-white py-2.5 rounded-xl font-bold mt-2 shadow">
+                    إرسال للجنة التدقيق والتوثيق
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة الترشح لجائزة التفوق العلمي -->
+    <div id="awardNominationModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-5 relative border border-slate-200 text-xs">
+            <button onclick="closeModal('awardNominationModal')" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="font-bold text-sm text-slate-900 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-accent"></i> الترشح لجائزة التفوق العلمي (1448هـ)
+            </h3>
+            <p class="text-[11px] text-slate-500 mb-3">للخريجين وحفظة القرآن الكريم والمبتكرين من أبناء وبنات الأسرة.</p>
+            <form onsubmit="handleAwardSubmit(event)" class="space-y-2.5">
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">فئة الجائزة</label>
+                    <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-semibold">
+                        <option>حفظ القرآن الكريم كاملاً أو أجزاء منه</option>
+                        <option>الدكتوراه والماجستير</option>
+                        <option>البكالوريوس (مرتبة الشرف الأولى والثانية)</option>
+                        <option>التفوق في الثانوية العامة (98% فأعلى)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">اسم المرشح / المرشحة</label>
+                    <input type="text" required placeholder="الاسم الرباعي" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">الجامعة / الجهة التعليمية والتقدير</label>
+                    <input type="text" placeholder="مثال: جامعة الملك سعود - معدل 4.98" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-slate-700">صورة الوثيقة أو شهادة التفوق</label>
+                    <input type="file" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-1.5 text-[11px]">
+                </div>
+                <button type="submit" class="w-full bg-accent hover:bg-accentHover text-darkGreen py-2.5 rounded-xl font-bold mt-2 shadow">
+                    رفع ملف الترشح لأمانة الجائزة
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- JavaScript التفاعلي للنموذج -->
+    <script>
+        let finChart, plChart;
+
+        // التبديل بين علامات التبويب
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-accent', 'border-accent');
+                btn.classList.add('text-slate-300', 'border-transparent');
+                if(btn.id !== 'tab-bloodBank') btn.classList.remove('text-red-300', 'hover:text-red-100');
+            });
+
+            const activeContent = document.getElementById('section-' + tabId);
+            if (activeContent) activeContent.classList.remove('hidden');
+
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if (activeBtn) {
+                if(tabId === 'bloodBank') {
+                    activeBtn.classList.add('text-red-500', 'border-red-500');
+                    activeBtn.classList.remove('text-red-300', 'border-transparent');
+                } else {
+                    activeBtn.classList.add('text-accent', 'border-accent');
+                    activeBtn.classList.remove('text-slate-300', 'border-transparent');
+                }
+            }
+
+            // تشغيل الرسوم البيانية عند فتح الأقسام المرتبطة بها
+            if (tabId === 'fund') initFinanceChart();
+            if (tabId === 'governance') initPollChart();
+        }
+
+        // تهيئة رسوم Chart.js
+        function initFinanceChart() {
+            const ctxFin = document.getElementById('financeChart');
+            if(!ctxFin) return;
+            if (finChart) finChart.destroy();
+            finChart = new Chart(ctxFin.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['وقف الملز', 'الوسيطى', 'الصندوق العام', 'الزكاة'],
+                    datasets: [{
+                        label: 'الإيرادات (بالألف ريال)',
+                        data: [120, 45, 284, 85],
+                        backgroundColor: '#c99a65',
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function initPollChart() {
+            const ctxPoll = document.getElementById('pollChart');
+            if(!ctxPoll) return;
+            if (plChart) plChart.destroy();
+            plChart = new Chart(ctxPoll.getContext('2d'), {
+                type: 'bar',
+                indexAxis: 'y',
+                data: {
+                    labels: ['الثمامة', 'مزرعة القصيم', 'الشرقية'],
+                    datasets: [{
+                        label: 'عدد الأصوات',
+                        data: [85, 42, 15],
+                        backgroundColor: ['#183c2e', '#2d6a4f', '#c99a65'],
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // تحريك بيئة العمل (Canvas) لشجرة العائلة
+        const container = document.getElementById('treePanContainer');
+        let isDown = false;
+        let startX, startY, scrollLeft, scrollTop;
+        let scale = 1;
+
+        if(container) {
+            container.addEventListener('mousedown', (e) => {
+                isDown = true;
+                container.classList.add('active');
+                startX = e.pageX - container.offsetLeft;
+                startY = e.pageY - container.offsetTop;
+                scrollLeft = container.scrollLeft;
+                scrollTop = container.scrollTop;
+            });
+            container.addEventListener('mouseleave', () => { isDown = false; });
+            container.addEventListener('mouseup', () => { isDown = false; });
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const y = e.pageY - container.offsetTop;
+                const walkX = (x - startX) * 2;
+                const walkY = (y - startY) * 2;
+                container.scrollLeft = scrollLeft - walkX;
+                container.scrollTop = scrollTop - walkY;
+            });
+        }
+
+        function zoomTree(factor) {
+            scale *= factor;
+            if(scale < 0.5) scale = 0.5;
+            if(scale > 1.8) scale = 1.8;
+            document.getElementById('treeNodes').style.transform = `scale(${scale})`;
+        }
+
+        // التحكم بالنوافذ المنبثقة
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // استعراض بيانات الفرد
+        function showPersonModal(name, branch, city, bio, status, dates) {
+            document.getElementById('mName').innerText = name;
+            document.getElementById('mBranch').innerText = branch;
+            document.getElementById('mCity').innerText = city;
+            document.getElementById('mBio').innerText = bio;
+            document.getElementById('mStatus').innerText = status;
+            document.getElementById('mDates').innerText = dates || 'معاصر';
+            document.getElementById('mAvatar').innerText = name.charAt(0);
+            openModal('personModal');
+        }
+
+        // سداد الاشتراك السريع
+        function processQuickPay() {
+            alert('تم استلام الاشتراك بنجاح وتحديث رصيدك في الصندوق العائلي!');
+            document.getElementById('fundBalanceDisplay').innerHTML = '285,700 <span class="text-sm font-sans font-normal text-emerald-200">ريال</span>';
+        }
+
+        // تبديل ترميم صور الذكاء الاصطناعي
+        function toggleAiPhoto(enhanced) {
+            document.getElementById('photoOld').classList.toggle('hidden', enhanced);
+            document.getElementById('photoEnhanced').classList.toggle('hidden', !enhanced);
+        }
+
+        // محاكاة استخراج نصوص الوثائق بالـ OCR
+        function runOcrSimulation() {
+            const box = document.getElementById('ocrResultBox');
+            box.innerHTML = '<div class="py-4 text-center text-primary font-bold"><i class="fa-solid fa-spinner fa-spin text-accent ml-2"></i> جاري التعرف على المخطوطة والتحقق من الأسماء...</div>';
+            setTimeout(() => {
+                box.innerHTML = `
+                    <div class="text-emerald-950 font-sans text-xs space-y-1">
+                        <strong class="text-primary block mb-1">✅ تم التحقق واستخراج الكيانات (دقة 98.6%):</strong>
+                        <p><strong>الواقف:</strong> صالح بن إبراهيم بن يحيى (الجد الجامع)</p>
+                        <p><strong>العين الموقوفة:</strong> بساتين ونخيل مزرعة الوسيطى</p>
+                        <p><strong>التاريخ المقيد:</strong> 14 ربيع الأول 1342هـ</p>
+                        <p><strong>شرط الوقف:</strong> للأرشد من الذرية، ويصرف ريعه للأرامل والأيتام والمتفوقين</p>
+                    </div>
+                `;
+            }, 800);
+        }
+
+        // تهنئة المولود
+        let congratsDone = false;
+        function congratulateBaby() {
+            if (!congratsDone) {
+                document.getElementById('babyCongratsText').innerHTML = '<i class="fa-solid fa-heart text-red-500"></i> 49 من أفراد الأسرة قدموا التهنئة (أنت معهم)';
+                document.getElementById('btnBabyCongrat').innerText = 'تم تقديم التهنئة ✓';
+                document.getElementById('btnBabyCongrat').className = 'bg-slate-200 text-slate-700 px-4 py-1.5 rounded-xl font-bold';
+                congratsDone = true;
+            }
+        }
+
+        // تأكيد الحضور للقاء العام
+        let rsvpStatus = false;
+        function toggleMainRsvp() {
+            const b = document.getElementById('btnMainRsvp');
+            const c = document.getElementById('rsvpCounterText');
+            if (!rsvpStatus) {
+                b.innerText = 'تم تأكيد حضورك ✓';
+                b.className = 'bg-emerald-600 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow';
+                c.innerText = '144 عضواً أكدوا الحضور (أنت مسجل)';
+                rsvpStatus = true;
+            } else {
+                b.innerText = 'تأكيد حضوري (RSVP)';
+                b.className = 'bg-primary hover:bg-secondary text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow';
+                c.innerText = '143 عضواً أكدوا الحضور';
+                rsvpStatus = false;
+            }
+        }
+
+        // إرسال التصويت في استطلاع الشورى
+        function submitPollVote() {
+            const selected = document.querySelector('input[name="winterPoll"]:checked');
+            if (!selected) {
+                alert('يرجى تحديد خيارك المفضل قبل الإرسال.');
+                return;
+            }
+            document.getElementById('btnSubmitVote').disabled = true;
+            document.getElementById('btnSubmitVote').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('voteConfirmedLabel').classList.remove('hidden');
+        }
+
+        // مسابقة وتحدي الذاكرة والتاريخ
+        const quizData = [
+            { q: "في أي عام هجري تم تأسيس وقف مزرعة 'الوسيطى' الشهيرة؟", a: ["أ) عام 1342هـ", "ب) عام 1365هـ", "ج) عام 1390هـ"], correct: 0 },
+            { q: "من هو أول رئيس لمجلس صندوق الأسرة عند تأسيسه عام 1405هـ؟", a: ["أ) سليمان بن صالح", "ب) محمد بن صالح", "ج) د. عبدالرحمن بن صالح"], correct: 1 },
+            { q: "كم يبلغ عدد الفروع الرئيسية المنبثقة عن الجد الجامع للأسرة؟", a: ["أ) فرعان", "ب) 3 فروع", "ج) 5 فروع"], correct: 1 }
+        ];
+        let currentQuizIdx = 0;
+        let currentQuizScore = 0;
+
+        function answerQuiz(optionIdx) {
+            if (optionIdx === quizData[currentQuizIdx].correct) {
+                currentQuizScore += 10;
+                alert('إجابة صحيحة! أحسنت 🎉 (+10 نقاط)');
+            } else {
+                alert('إجابة غير دقيقة! الإجابة الصحيحة هي: ' + quizData[currentQuizIdx].a[quizData[currentQuizIdx].correct]);
+            }
+            currentQuizIdx++;
+            if (currentQuizIdx < quizData.length) {
+                document.getElementById('quizProgress').innerText = `السؤال ${currentQuizIdx + 1} من 3`;
+                document.getElementById('quizScore').innerText = `النقاط: ${currentQuizScore}`;
+                document.getElementById('quizQuestion').innerText = quizData[currentQuizIdx].q;
+                const ansBtns = document.querySelectorAll('.quiz-btn');
+                ansBtns.forEach((btn, i) => btn.innerText = quizData[currentQuizIdx].a[i]);
+            } else {
+                document.getElementById('quizContainer').innerHTML = `
+                    <div class="text-center py-6">
+                        <i class="fa-solid fa-medal text-4xl text-amber-500 mb-2"></i>
+                        <h3 class="font-bold text-base text-slate-900">أنهيت التحدي بنجاح!</h3>
+                        <p class="text-xs text-slate-600 mt-1">مجموع نقاطك النهائي: <strong class="text-primary font-mono">${currentQuizScore} من 30 نقطة</strong></p>
+                    </div>
+                `;
+            }
+        }
+
+        function handleVitalSubmit(e) {
+            e.preventDefault();
+            alert('تم استلام الطلب وتوجيهه لأمانة لجنة الأنساب لتدقيقه وتحديث الشجرة رسمياً.');
+            closeModal('addVitalModal');
+        }
+
+        function handleAwardSubmit(e) {
+            e.preventDefault();
+            alert('تم رفع ملف الترشح لأمانة الجائزة، وستصلك رسالة تأكيد عبر الهاتف.');
+            closeModal('awardNominationModal');
+        }
+
+        function searchTree() {
+            const val = document.getElementById('treeSearchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.tree-card');
+            cards.forEach(card => {
+                if (card.innerText.toLowerCase().includes(val)) {
+                    card.classList.remove('opacity-20');
+                } else {
+                    card.classList.add('opacity-20');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
