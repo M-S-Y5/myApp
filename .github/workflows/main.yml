@@ -19,8 +19,27 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Generate Native iOS Folder
-        run: npx expo prebuild -p ios --clean
+      - name: Generate Lightweight Native iOS Folder
+        # توليد الملفات بدون تثبيت فوري للمكتبات لتجنب تعقيدات Expo
+        run: npx expo prebuild -p ios --clean --no-install
+
+      - name: Force Node Path for Xcode
+        run: |
+          cd ios
+          echo "export NODE_BINARY=$(which node)" > .xcode.env.local
+          sudo ln -sf $(which node) /usr/local/bin/node
+
+      - name: Clean Expo Modules (The Fix)
+        # إزالة السكربتات التابعة لـ ExpoModulesJSI من ملف الإعدادات
+        run: |
+          cd ios
+          sed -i '' '/ExpoModulesJSI/d' Podfile
+          sed -i '' '/ExpoModulesCore/d' Podfile
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
 
       - name: Disable Code Signing Globally (Main App & Pods)
         run: |
@@ -56,17 +75,6 @@ jobs:
           File.write('Podfile', podfile)
           EOF
           ruby patch_pods.rb
-
-      - name: Force Node Path for Xcode
-        run: |
-          cd ios
-          echo "export NODE_BINARY=$(which node)" > .xcode.env.local
-          sudo ln -sf $(which node) /usr/local/bin/node
-
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
 
       - name: Build iOS App
         run: |
