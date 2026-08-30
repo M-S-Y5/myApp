@@ -7,6 +7,11 @@ on:
 jobs:
   build:
     runs-on: macos-15
+    env:
+      CODE_SIGNING_ALLOWED: 'NO'
+      CODE_SIGNING_REQUIRED: 'NO'
+      CODE_SIGN_IDENTITY: '-'
+      ENABLE_USER_SCRIPT_SANDBOXING: 'NO'
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -16,21 +21,21 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Force Node Path Globally
+        run: sudo ln -sf $(which node) /usr/local/bin/node
+
       - name: Install Dependencies
         run: npm install
 
       - name: Generate Native iOS Folder
         run: npx expo prebuild -p ios --clean
 
-      - name: Force Node Path Globally
-        run: sudo ln -sf $(which node) /usr/local/bin/node
-
       - name: Install CocoaPods
         run: |
           cd ios
           pod install
 
-      - name: Strip Code Signing Globally (The Ultimate Fix)
+      - name: Disable Code Signing & Sandboxing Everywhere
         run: |
           cat << 'EOF' > nuke_signing.rb
           require 'xcodeproj'
@@ -64,7 +69,15 @@ jobs:
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath "$PWD/DerivedData" build
+          
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$PWD/DerivedData" \
+            NODE_BINARY=$(which node) \
+            build
 
       - name: Convert to IPA
         run: |
