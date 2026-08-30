@@ -25,8 +25,6 @@ jobs:
       - name: Disable Code Signing Globally (Main App & Pods)
         run: |
           cd ios
-          
-          # 1. إيقاف الشهادات في مشروع التطبيق الأساسي
           cat << 'EOF' > patch_main.rb
           require 'xcodeproj'
           project = Xcodeproj::Project.open(Dir.glob("*.xcodeproj").first)
@@ -42,7 +40,6 @@ jobs:
           EOF
           ruby patch_main.rb
 
-          # 2. إيقاف الشهادات في جميع المكتبات الداخلية
           cat << 'EOF' > patch_pods.rb
           podfile = File.read('Podfile')
           hook = <<~HOOK
@@ -76,7 +73,6 @@ jobs:
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          # تم تنظيف سطر الأوامر ليسمح للمكتبات الداخلية بالبناء بطبيعتها
           xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath "$PWD/DerivedData" build
 
       - name: Convert to IPA
