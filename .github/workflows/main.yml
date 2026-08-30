@@ -7,11 +7,6 @@ on:
 jobs:
   build:
     runs-on: macos-15
-    env:
-      CODE_SIGNING_ALLOWED: 'NO'
-      CODE_SIGNING_REQUIRED: 'NO'
-      CODE_SIGN_IDENTITY: '-'
-      ENABLE_USER_SCRIPT_SANDBOXING: 'NO'
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -35,55 +30,50 @@ jobs:
           cd ios
           pod install
 
-      - name: Disable Code Signing & Sandboxing Everywhere
+      - name: Disable Code Signing Globally (The Ultimate Fix)
         run: |
           cat << 'EOF' > nuke_signing.rb
           require 'xcodeproj'
-          ['ios', 'node_modules'].each do |dir|
-            Dir.glob("#{dir}/**/*.xcodeproj").each do |path|
-              begin
-                project = Xcodeproj::Project.open(path)
-                project.targets.each do |target|
-                  target.build_configurations.each do |config|
-                    config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-                    config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-                    config.build_settings['CODE_SIGN_IDENTITY'] = ''
-                    config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
-                    config.build_settings['DEVELOPMENT_TEAM'] = ''
-                    config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = ''
-                    config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
-                  end
+          Dir.glob("**/*.xcodeproj").each do |path|
+            begin
+              project = Xcodeproj::Project.open(path)
+              project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+                  config.build_settings['CODE_SIGN_IDENTITY'] = ''
+                  config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
+                  config.build_settings['DEVELOPMENT_TEAM'] = ''
+                  config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = ''
+                  config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
                 end
-                project.save
-                puts "Patched: #{path}"
-              rescue => e
-                puts "Skipped: #{path} - #{e}"
               end
+              project.save
+            rescue
             end
           end
           EOF
           ruby nuke_signing.rb
 
-      - name: Build iOS App
+      - name: Build iOS App (Clean & Native)
         run: |
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
           
-          xcodebuild -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination "generic/platform=iOS" \
-            -derivedDataPath "$PWD/DerivedData" \
-            NODE_BINARY=$(which node) \
-            build
+          # سطر بناء نظيف تماماً بدون أي مسارات إجبارية أو متغيرات بيئية متضاربة
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" build
 
-      - name: Convert to IPA
+      - name: Extract & Convert to IPA
         run: |
           cd ios
           mkdir -p Payload
-          mv DerivedData/Build/Products/Release-iphoneos/*.app Payload/
+          
+          # صائد الملفات: يبحث عن التطبيق في مسار نظام Mac الخفي ويسحبه
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -type d | grep "Release-iphoneos" | head -1)
+          echo "Found App at: $APP_PATH"
+          
+          cp -R "$APP_PATH" Payload/
           zip -r ../myApp.ipa Payload
 
       - name: Upload IPA File
