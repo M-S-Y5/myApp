@@ -16,67 +16,48 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Force Node Path Globally
+        run: sudo ln -sf $(which node) /usr/local/bin/node
+
       - name: Install Dependencies
         run: npm install
 
-      - name: Generate Lightweight Native iOS Folder
-        # توليد الملفات بدون تثبيت فوري للمكتبات لتجنب تعقيدات Expo
-        run: npx expo prebuild -p ios --clean --no-install
-
-      - name: Force Node Path for Xcode
-        run: |
-          cd ios
-          echo "export NODE_BINARY=$(which node)" > .xcode.env.local
-          sudo ln -sf $(which node) /usr/local/bin/node
-
-      - name: Clean Expo Modules (The Fix)
-        # إزالة السكربتات التابعة لـ ExpoModulesJSI من ملف الإعدادات
-        run: |
-          cd ios
-          sed -i '' '/ExpoModulesJSI/d' Podfile
-          sed -i '' '/ExpoModulesCore/d' Podfile
+      - name: Generate Native iOS Folder
+        run: npx expo prebuild -p ios --clean
 
       - name: Install CocoaPods
         run: |
           cd ios
           pod install
 
-      - name: Disable Code Signing Globally (Main App & Pods)
+      - name: Disable Code Signing & Sandboxing EVERYWHERE
         run: |
-          cd ios
-          cat << 'EOF' > patch_main.rb
+          cat << 'EOF' > patch_all.rb
           require 'xcodeproj'
-          project = Xcodeproj::Project.open(Dir.glob("*.xcodeproj").first)
-          project.targets.each do |target|
-            target.build_configurations.each do |config|
-              config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-              config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-              config.build_settings['CODE_SIGN_IDENTITY'] = ''
-              config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+          Dir.glob("**/*.xcodeproj").each do |path|
+            begin
+              project = Xcodeproj::Project.open(path)
+              project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+                  config.build_settings['CODE_SIGN_IDENTITY'] = ''
+                  config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+                end
+              end
+              project.save
+            rescue
             end
           end
-          project.save
           EOF
-          ruby patch_main.rb
-
-          cat << 'EOF' > patch_pods.rb
-          podfile = File.read('Podfile')
-          hook = <<~HOOK
-            installer.pods_project.targets.each do |target|
-              target.build_configurations.each do |config|
-                config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-                config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-                config.build_settings['CODE_SIGN_IDENTITY'] = ''
-                config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
-              end
-            end
-          HOOK
-          podfile.sub!(/post_install do \|installer\|/, "post_install do |installer|\n" + hook)
-          File.write('Podfile', podfile)
-          EOF
-          ruby patch_pods.rb
+          ruby patch_all.rb
 
       - name: Build iOS App
+        env:
+          CODE_SIGNING_ALLOWED: 'NO'
+          CODE_SIGNING_REQUIRED: 'NO'
+          CODE_SIGN_IDENTITY: '-'
+          ENABLE_USER_SCRIPT_SANDBOXING: 'NO'
         run: |
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
