@@ -39,9 +39,10 @@ jobs:
         run: |
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json | jq -r '.workspace.schemes[0]')
           
-          # تفعيل فلترة الأخطاء لتظهر بشكل نظيف ومقروء
+          # استخراج اسم التطبيق الفعلي بدلاً من الترتيب الأبجدي
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          
           set -o pipefail
           xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO ENABLE_USER_SCRIPT_SANDBOXING=NO CONFIGURATION_BUILD_DIR=$PWD/build build | xcpretty
 
