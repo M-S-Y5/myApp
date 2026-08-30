@@ -34,23 +34,21 @@ jobs:
           pod install
 
       - name: Build iOS App (Bypass Certificates)
-        env:
-          ENABLE_USER_SCRIPT_SANDBOXING: NO
         run: |
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
-          
-          # استخراج اسم التطبيق الفعلي بدلاً من الترتيب الأبجدي
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
           
           set -o pipefail
-          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO ENABLE_USER_SCRIPT_SANDBOXING=NO CONFIGURATION_BUILD_DIR=$PWD/build build | xcpretty
+          # تم استبدال أمر التوجيه الإجباري بمسار DerivedData المنظم
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath "$PWD/DerivedData" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO ENABLE_USER_SCRIPT_SANDBOXING=NO build | xcpretty
 
       - name: Convert to IPA
         run: |
           cd ios
           mkdir -p Payload
-          mv build/*.app Payload/
+          # سحب التطبيق من المسار الافتراضي المنظم
+          mv DerivedData/Build/Products/Release-iphoneos/*.app Payload/
           zip -r ../myApp.ipa Payload
 
       - name: Upload IPA File
