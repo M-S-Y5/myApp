@@ -1,4 +1,4 @@
-name: Build iOS Simulator App
+name: Build Android APK
 on:
   push:
     branches: [ main ]
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -16,37 +16,26 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
       - name: Install Dependencies
         run: npm install
 
-      - name: Generate Native iOS Folder
-        run: npx expo prebuild -p ios --clean
+      - name: Generate Native Android Folder
+        run: npx expo prebuild -p android --clean
 
-      - name: Install CocoaPods
+      - name: Build APK
         run: |
-          cd ios
-          pod install
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
 
-      - name: Build for iOS Simulator
-        run: |
-          cd ios
-          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          
-          # التوجيه حصراً لبيئة المحاكي (iphonesimulator) يلغي طلبات الشهادات جذرياً
-          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphonesimulator -destination "generic/platform=iOS Simulator" -derivedDataPath "$PWD/DerivedData" build
-
-      - name: Compress Simulator App
-        run: |
-          cd ios
-          # البحث عن ملف التطبيق داخل مجلد المحاكي وضغطه
-          APP_PATH=$(find "$PWD/DerivedData" -name "*.app" -type d | grep "Release-iphonesimulator" | head -1)
-          cd "$APP_PATH/.."
-          APP_NAME=$(basename "$APP_PATH")
-          zip -r "../../../../../myApp-Simulator.zip" "$APP_NAME"
-
-      - name: Upload Simulator Build
+      - name: Upload APK File
         uses: actions/upload-artifact@v4
         with:
-          name: iOS-Simulator-Build
-          path: myApp-Simulator.zip
+          name: myApp-Android-Build
+          path: android/app/build/outputs/apk/release/app-release.apk
