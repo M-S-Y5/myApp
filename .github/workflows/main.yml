@@ -7,8 +7,6 @@ on:
 jobs:
   build:
     runs-on: macos-15
-    env:
-      EXPO_USE_SOURCE: '1'
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -40,7 +38,6 @@ jobs:
           pod install
 
       - name: Disable Code Signing Globally (App & Pods)
-        # هذا السكربت يستهدف كافة مشاريع Xcode دفعة واحدة بعد بناء المكتبات
         run: |
           cd ios
           cat << 'EOF' > nuke_signing.rb
