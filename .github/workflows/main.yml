@@ -7,13 +7,8 @@ on:
 jobs:
   build:
     runs-on: macos-15
-    # تعميم المتغيرات البيئية لتقرأها كافة الأدوات (npm, pod, xcodebuild)
     env:
       EXPO_USE_SOURCE: '1'
-      CODE_SIGNING_ALLOWED: 'NO'
-      CODE_SIGNING_REQUIRED: 'NO'
-      CODE_SIGN_IDENTITY: '-'
-      ENABLE_USER_SCRIPT_SANDBOXING: 'NO'
     steps:
       - name: Checkout Project
         uses: actions/checkout@v4
@@ -23,27 +18,35 @@ jobs:
         with:
           node-version: '20'
 
-      - name: System-Level Xcode Sandboxing Disable
-        # إيقاف الحماية من جذور نظام Mac لمنع حظر السكربتات الداخلية
+      - name: Disable Xcode Sandboxing Globally
         run: defaults write com.apple.dt.Xcode IDEEnableUserScriptSandboxing -bool NO
 
       - name: Install Dependencies
         run: npm install
 
+      - name: Surgical Fix for Hidden Scripts
+        # حقن أوامر إيقاف الشهادات داخل أي سكربت مخفي في المكتبات
+        run: |
+          find node_modules -type f \( -name "*.sh" -o -name "*.rb" \) -exec sed -i '' 's/xcodebuild /xcodebuild CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" ENABLE_USER_SCRIPT_SANDBOXING=NO /g' {} +
+
       - name: Generate Native iOS Folder
         run: npx expo prebuild -p ios --clean
 
-      - name: Configure Node Path for Xcode
+      - name: Configure Node Path
         run: |
           cd ios
           echo "export NODE_BINARY=$(which node)" > .xcode.env.local
           sudo ln -sf $(which node) /usr/local/bin/node
 
       - name: Install CocoaPods
-        # الأداة ستقرأ المتغير EXPO_USE_SOURCE المفروض بالأعلى وتلغي سكربت JSI
         run: |
           cd ios
           pod install
+
+      - name: Patch Generated Pod Scripts
+        # تأكيد حقن أمر الإيقاف داخل السكربتات التي ولدتها CocoaPods للتو
+        run: |
+          find ios/Pods -type f -name "*.sh" -exec sed -i '' 's/xcodebuild /xcodebuild CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" ENABLE_USER_SCRIPT_SANDBOXING=NO /g' {} + || true
 
       - name: Disable Code Signing in Project Files
         run: |
@@ -74,7 +77,8 @@ jobs:
           cd ios
           WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -1)
           SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath "$PWD/DerivedData" build
+          
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath "$PWD/DerivedData" build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" ENABLE_USER_SCRIPT_SANDBOXING=NO
 
       - name: Extract & Convert to IPA
         run: |
